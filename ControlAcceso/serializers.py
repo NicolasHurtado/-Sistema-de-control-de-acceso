@@ -101,3 +101,8 @@ class HorarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Horario
         fields = '__all__'
+
+class AsignacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Asignacion
+        fields = '__all__'
