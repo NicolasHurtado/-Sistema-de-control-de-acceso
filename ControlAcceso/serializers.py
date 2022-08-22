@@ -34,3 +34,15 @@ class AdministratorSerializer(serializers.ModelSerializer):
         print(instance.user_permissions.all())
         instance.save()
         return instance
+
+class EmpresaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Empresa
+        fields = '__all__'
+
+
+class EmpleadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = '__all__'
+    

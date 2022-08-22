@@ -137,6 +137,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 STATIC_URL = 'static/'
 
 # Default primary key field type
@@ -147,6 +149,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
 
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ]
 
 }
 
@@ -171,4 +177,4 @@ EMAIL_HOST = "smtp-mail.outlook.com"
 EMAIL_HOST_USER = os.environ.get("email", "prueba3cmd@outlook.com")
 EMAIL_HOST_PASSWORD = os.environ.get("password", "System__{{}21}***}")
 
-print("este es el correo",EMAIL_HOST_USER)
+
