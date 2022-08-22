@@ -173,8 +173,8 @@ SPECTACULAR_SETTINGS = {
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST = "smtp-mail.outlook.com"
-EMAIL_HOST_USER = os.environ.get("email", "prueba3cmd@outlook.com")
-EMAIL_HOST_PASSWORD = os.environ.get("password", "System__{{}21}***}")
+EMAIL_HOST = "smtp.office365.com"
+EMAIL_HOST_USER = os.environ.get("email", "niko71223@hotmail.es")
+EMAIL_HOST_PASSWORD = os.environ.get("password", "nikoflow12")
 
 

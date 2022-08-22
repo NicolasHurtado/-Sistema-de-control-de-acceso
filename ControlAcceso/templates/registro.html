@@ -34,10 +34,10 @@
           <!-- Left links -->
           <ul class="navbar-nav mb-2 mb-lg-0 ">
             <li class="nav-item mx-5">
-              <a class="navbar-brand " aria-current="page" href="#">Bienvenido</a>
+              <a class="navbar-brand " aria-current="page" href="#">BIENVENIDO</a>
             </li>
             <li class="nav-item mx-5">
-              <a class="navbar-brand" href="#">{{nombre_empresa | capfirst}}</a>
+              <a class="navbar-brand" href="#">{{nombre_empresa | upper }}</a>
             </li>
           </ul>
           <!-- Left links -->
@@ -60,20 +60,20 @@
                     <div class="col">
                     <div class="form-outline ">
                         <label class="form-label d-grid gap-2 col-4 mx-auto" for="form6Example1"><strong>Identificación</strong></label>
-                        <input  type="text" name="identificacion" class="form-control" />
+                        <input  type="text" placeholder="Ejemplo: 1193478478" name="identificacion" class="form-control" required/>
                         
                     </div>
                     </div>
                     <div class="col">
                         <div class="item-option-select">
                             <label class="form-label d-grid gap-4 col-2 mx-auto" for="form6Example1"><strong>Nombre</strong></label>
-                            <input  type="text" name="nombre" class="form-control" />
+                            <input  type="text" placeholder="Ejemplo: Santiago" name="nombre" class="form-control" required/>
                         </div>
                     </div>
                     <div class="col">
                         <div class="item-option-select">
                             <label class="form-label d-grid gap-4 col-2 mx-auto" for="form6Example1"><strong>Apellido</strong></label>
-                            <input  type="text" name="apellido" class="form-control" />
+                            <input  type="text" placeholder="Ejemplo: Lopez Perez" name="apellido" class="form-control" required />
                         </div>
                     </div>
                     <div class="col">
@@ -89,14 +89,14 @@
                     <div class="col">
                     <div class="form-outline ">
                         <label class="form-label d-grid gap-2 col-3 mx-auto" for="form6Example1"><strong>Dirección</strong></label>
-                        <input  type="text" name="direccion" class="form-control" />
+                        <input  type="text" placeholder="Ejemplo: Calle 17 #72-40" name="direccion" class="form-control" required/>
                         
                     </div>
                     </div>
                     <div class="col">
                         <div class="item-option-select">
-                            <label class="form-check pb-2 text-center " for="form6Example1"><strong>Telefono (Ej: +57602424412)</strong></label>
-                            <input  type="text" name="telefono" class="form-control" />
+                            <label class="form-check pb-2 text-center " for="form6Example1"><strong>Telefono</strong></label>
+                            <input  type="text" placeholder="Ejemplo: +57602424412" name="telefono" class="form-control" required/>
                         </div>
                     </div>
                     <div class="col">
@@ -108,7 +108,7 @@
                     <div class="col">
                         <div class="item-option-select">
                             <label class="form-label d-grid gap-4 col-3 mx-auto" for="form6Example1"><strong>Ubicación</strong></label>
-                            <input  type="text" name="ubicacion" class="form-control" />
+                            <input  type="text"  placeholder="Ejemplo: Cali, Colombia" name="ubicacion" class="form-control" required />
                         </div>
                     </div>
                 </div>

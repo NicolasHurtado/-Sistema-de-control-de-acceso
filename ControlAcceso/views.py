@@ -205,7 +205,7 @@ class DetalleEmpresas(views.APIView):
                 serializer = EmpresaSerializer(Emp,many=False)
                 return Response(serializer.data,status=status.HTTP_200_OK)
             else:
-                return Response({"res": f"El objeto con el id: {id} no existe"},status=status.HTTP_400_BAD_REQUEST)
+                return Response({"res": f"La empresa con el id: {id} no existe"},status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
             
@@ -219,7 +219,7 @@ class DetalleEmpresas(views.APIView):
                 Emp = None
             
             if not Emp:
-                return Response({"res": f"El objeto con el id: {id} no existe"},status=status.HTTP_400_BAD_REQUEST)
+                return Response({"res": f"La Empresa con el id: {id} no existe"},status=status.HTTP_400_BAD_REQUEST)
 
             serializer = EmpresaSerializer(instance = Emp, data=request.data, partial = True)
             if serializer.is_valid():
@@ -244,6 +244,8 @@ class DetalleEmpresas(views.APIView):
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
 
+
+#Clase para envio de correo de registro de empleado
 class CorreoRegistro(views.APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def post(self,request):
@@ -260,7 +262,7 @@ class CorreoRegistro(views.APIView):
                 token = create_token({'email': request.data["correo_destinatario"],'id_empresa': emp.id, 'nombre_empresa': emp.nombre })
                 url = f"http://127.0.0.1:8000/registro/?token={token}"
                 msj = f"""Para registrar sus datos ingrese a este link {url}"""
-                sbj = f"""FORMULARIO DE REGISTRO {emp.nombre}"""
+                sbj = f"""FORMULARIO DE REGISTRO {emp.nombre.upper()}"""
 
                 send_mail(
                         subject=sbj,
@@ -274,6 +276,8 @@ class CorreoRegistro(views.APIView):
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
 
+
+# Plantilla de formulario de registro de empleado
 @api_view(['GET','POST'])
 @renderer_classes([JSONRenderer,TemplateHTMLRenderer])
 def Registro(request):
@@ -300,7 +304,7 @@ def Registro(request):
     }
     return render(request,'registro.html', context, status=status.HTTP_200_OK)
 
-
+# Empleados
 class Empleado(views.APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def get(self,request):
@@ -336,7 +340,7 @@ class Empleado(views.APIView):
         token = request.META.get('CSRF_COOKIE', None)
         print(token)
         if not token:
-            return JsonResponse({'res': 'No ha enviado token'},status=status.HTTP_400_BAD_REQUEST)
+            return Response({'res': 'No ha enviado token'},status=status.HTTP_400_BAD_REQUEST)
         
         serializer = EmpleadoSerializer(data=request.data)
         if serializer.is_valid():
@@ -349,15 +353,25 @@ class DetalleEmpleado(views.APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def get(self,request, id):
         if request.user.is_staff:
+            admin = request.user.id
             try:
-                Emp = Empresa.objects.get(id=id)
+                empresa = Empresa.objects.get(admin_user=admin)
             except Empresa.DoesNotExist:
-                Emp = None
-            if Emp:
-                serializer = EmpresaSerializer(Emp,many=False)
+                empresa = None
+            
+            if empresa:
+                try:
+                    Empleado = Usuario.objects.get(id=id,empresa=empresa)
+                except Usuario.DoesNotExist:
+                    Empleado = None
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+            if Empleado:
+                serializer = EmpleadoSerializer(Empleado,many=False)
                 return Response(serializer.data,status=status.HTTP_200_OK)
             else:
-                return Response({"res": f"El objeto con el id: {id} no existe"},status=status.HTTP_400_BAD_REQUEST)
+                return Response({"res": f"Usuario invalido"},status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
             
@@ -373,7 +387,7 @@ class DetalleEmpleado(views.APIView):
             if not Emp:
                 return Response({"res": f"El objeto con el id: {id} no existe"},status=status.HTTP_400_BAD_REQUEST)
 
-            serializer = EmpresaSerializer(instance = Emp, data=request.data, partial = True)
+            serializer = EmpleadoSerializer(instance = Emp, data=request.data, partial = True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)

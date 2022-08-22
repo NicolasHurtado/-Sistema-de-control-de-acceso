@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from geopy.geocoders import Nominatim
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Permission
 from .models import *
@@ -39,10 +40,40 @@ class EmpresaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Empresa
         fields = '__all__'
+    
+    #Se valida la ubicación con GeoPy
+    def validate_ubicacion(self,value):
+        geolocator = Nominatim(user_agent="useit")
+        location = ""
+
+        try:
+            location = geolocator.geocode(value)
+        except:
+            location = None
+
+        if not location:
+            raise serializers.ValidationError('No encontré esa ubicación')
+        
+        return value
 
 
 class EmpleadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = '__all__'
+    
+    #Se valida la ubicación con GeoPy
+    def validate_ubicacion(self,value):
+        geolocator = Nominatim(user_agent="useit")
+        location = ""
+
+        try:
+            location = geolocator.geocode(value)
+        except:
+            location = None
+
+        if not location:
+            raise serializers.ValidationError('No encontré esa ubicación')
+        
+        return value
     
