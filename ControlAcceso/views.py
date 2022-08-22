@@ -250,20 +250,27 @@ class CorreoRegistro(views.APIView):
         if request.user.is_staff:
             admin = request.user.id
             print(admin)
-            emp = Empresa.objects.get(admin_user=admin)
+            try:
+                emp = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                emp = None
             print(emp)
-            token = create_token({'email': request.data["correo_destinatario"],'id_empresa': emp.id, 'nombre_empresa': emp.nombre })
-            url = f"http://127.0.0.1:8000/registro/?token={token}"
-            msj = f"""Para registrar sus datos ingrese a este link {url}"""
-            sbj = f"""FORMULARIO DE REGISTRO {emp.nombre}"""
 
-            send_mail(
-                    subject=sbj,
-                    message=msj,
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[request.data["correo_destinatario"]],
-            )
-            return Response({"res": "Correo enviado correctamente"},status=status.HTTP_200_OK)
+            if emp:
+                token = create_token({'email': request.data["correo_destinatario"],'id_empresa': emp.id, 'nombre_empresa': emp.nombre })
+                url = f"http://127.0.0.1:8000/registro/?token={token}"
+                msj = f"""Para registrar sus datos ingrese a este link {url}"""
+                sbj = f"""FORMULARIO DE REGISTRO {emp.nombre}"""
+
+                send_mail(
+                        subject=sbj,
+                        message=msj,
+                        from_email=settings.EMAIL_HOST_USER,
+                        recipient_list=[request.data["correo_destinatario"]],
+                )
+                return Response({"res": "Correo enviado correctamente"},status=status.HTTP_200_OK)
+
+            return Response({"res": "No estás asignado una empresa"},status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
 
@@ -271,6 +278,7 @@ class CorreoRegistro(views.APIView):
 @renderer_classes([JSONRenderer,TemplateHTMLRenderer])
 def Registro(request):
     token = request.query_params.get("token")
+    print(token)
     if not token:
         return JsonResponse({'res': 'No ha enviado token'},status=status.HTTP_400_BAD_REQUEST)
     
@@ -318,23 +326,25 @@ class Empleado(views.APIView):
                     serializer = EmpleadoSerializer(Empleados, many=True)  
                     return Response(serializer.data,status=status.HTTP_200_OK)
                 
-                return Response({"res": "No tienes empleados en tu empresa"},status=status.HTTP_400_BAD_REQUEST)
+                return Response({"res": f"No tienes empleados en tu empresa ({Emp.nombre})"},status=status.HTTP_400_BAD_REQUEST)
 
             return Response({"res": "No estas asignado una empresa"},status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
     
     def post(self, request):
-        if request.user.has_perm("ControlAcceso.add_usuario"):
-            serializer = EmpleadoSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        token = request.META.get('CSRF_COOKIE', None)
+        print(token)
+        if not token:
+            return JsonResponse({'res': 'No ha enviado token'},status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = EmpleadoSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
-
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 class DetalleEmpleado(views.APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def get(self,request, id):
