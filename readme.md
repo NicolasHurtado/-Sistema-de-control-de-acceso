@@ -4,7 +4,6 @@ Versión Django: `3.2.14`
 
 ## Funcion de la Aplicación
 
-La aplicación web debe permitir:
 -  El usuario administrador(superusuario) de la aplicación puede crear empresas.
 
 -  El usuario administrador(superusuario) de la aplicación puede crear un usuario
