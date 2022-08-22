@@ -175,6 +175,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST = "smtp.office365.com"
 EMAIL_HOST_USER = os.environ.get("email", "niko71223@hotmail.es")
-EMAIL_HOST_PASSWORD = os.environ.get("password", "nikoflow12")
+EMAIL_HOST_PASSWORD = os.environ.get("password", "pruebauseit123")
 
 
