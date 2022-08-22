@@ -557,3 +557,179 @@ class DetalleSede(views.APIView):
             return Response({"res": f"Sede {Sede.nombre} ha sido eliminado!"}, status=status.HTTP_200_OK)
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+
+# Horarios
+class HorarioEmpleado(views.APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def get(self,request):
+        if request.user.is_superuser:
+            Ho = Horario.objects.all()
+            serializer = HorarioSerializer(Ho, many=True)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        elif request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Usuarios = Usuario.objects.filter(empresa=empresa)
+                except Usuario.DoesNotExist:
+                    Usuarios = None
+                
+                if Usuarios:
+                    nueva_lista = [usuario.id for usuario in Usuarios]
+                    print(nueva_lista)
+                    try:
+                        hor = Horario.objects.filter(usuario__in=nueva_lista) 
+                    except Horario.DoesNotExist:
+                        hor = None
+
+                    if not hor:
+                        Response({"res": f"No tienes horarios establecidos a tus empleados"},status=status.HTTP_400_BAD_REQUEST)
+                    
+                    serializer = HorarioSerializer(hor, many=True)  
+                    return Response(serializer.data,status=status.HTTP_200_OK)
+                
+                return Response({"res": f"No tienes empleados en tu empresa ({empresa.nombre})"},status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"res": "No estas asignado una empresa"},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+    
+    def post(self, request):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                id_empleado = request.data["usuario"]
+                try:
+                    Emp = Usuario.objects.get(id=id_empleado,empresa=empresa)
+                except:
+                    Emp = None
+                
+                if Emp:
+                    serializer = HorarioSerializer(data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                return Response({"res": "Empleado no disponible"},status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+
+class DetalleHorarioEmpleado(views.APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def get(self,request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Ho = Horario.objects.get(id=id)
+                except Horario.DoesNotExist:
+                    Ho = None
+                
+                if Ho:
+                    print("usuario",Ho.usuario_id)
+                    try:
+                        emp = Usuario.objects.get(id=Ho.usuario_id, empresa=empresa)
+                        print(emp)
+                    except Usuario.DoesNotExist:
+                        emp = None
+                    
+                    if emp:
+                        print("hola entre a serializar")
+                        serializer = HorarioSerializer(Ho,many=False)
+                        return Response(serializer.data,status=status.HTTP_200_OK)
+                    return Response({"res": "El empleado no es de tu empresa"},status=status.HTTP_403_FORBIDDEN)
+                else:
+                    return Response({"res": "Horario no disponible"},status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+            
+        
+    def put(self, request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Ho = Horario.objects.get(id=id)
+                except Horario.DoesNotExist:
+                    Ho = None
+                if Ho:
+                    try:
+                        emp = Usuario.objects.get(id=request.data["usuario"], empresa=empresa)
+                        print(emp)
+                    except Usuario.DoesNotExist:
+                        emp = None
+                    
+                    if emp:
+                        print("hola entre a serializar")
+                        serializer = HorarioSerializer(instance = Ho, data=request.data, partial = True)
+                        if serializer.is_valid():
+                            serializer.save()
+                            return Response(serializer.data, status=status.HTTP_200_OK)
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"res": "El empleado no es de tu empresa"},status=status.HTTP_403_FORBIDDEN)
+                else:
+                    return Response({"res": "Horario no disponible"},status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+    
+    def delete(self, request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Ho = Horario.objects.get(id=id)
+                except Horario.DoesNotExist:
+                    Ho = None
+                if Ho:
+                    try:
+                        emp = Usuario.objects.get(id=Ho.usuario_id, empresa=empresa)
+                        print(emp)
+                    except Usuario.DoesNotExist:
+                        emp = None
+                    if emp:
+                        Ho.delete()
+                        return Response({"res": f"Horario de {emp.nombre} ha sido eliminado!"}, status=status.HTTP_200_OK)
+                    return Response({"res": "El empleado no es de tu empresa"},status=status.HTTP_403_FORBIDDEN)
+                else:
+                    return Response({"res": "Horario no disponible"},status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)

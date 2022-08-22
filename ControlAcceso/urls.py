@@ -11,4 +11,6 @@ urlpatterns = [
     path("empleado/<int:id>/",  DetalleEmpleado.as_view(), name="DetalleEmpleado"),
     path("sede/",  Sede.as_view(), name="Sede"),
     path("sede/<int:id>/",  DetalleSede.as_view(), name="DetalleSede"),
+    path("horario/",  HorarioEmpleado.as_view(), name="HorarioEmpleado"),
+    path("horario/<int:id>/",  DetalleHorarioEmpleado.as_view(), name="DetalleHorarioEmpleado"),
 ]

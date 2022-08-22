@@ -97,3 +97,7 @@ class SedeSerializer(serializers.ModelSerializer):
         
         return location
     
+class HorarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Horario
+        fields = '__all__'
