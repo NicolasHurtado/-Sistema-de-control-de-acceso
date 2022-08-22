@@ -2,6 +2,25 @@ Versión Python: `3.6`
 
 Versión Django: `3.2.14`
 
+## Funcion de la Aplicación
+
+La aplicación web debe permitir:
+-  El usuario administrador(superusuario) de la aplicación puede crear empresas.
+
+-  El usuario administrador(superusuario) de la aplicación puede crear un usuario
+administrador para cada empresa creada e invitarlo por correo electrónico.
+
+-  El usuario administrador de cada empresa debe poder gestionar puntos de acceso de la
+empresa (sedes).
+
+-  El usuario administrador de la empresa puede invitar a un empleado de la organización a registrarse con un vínculo dentro de un correo electrónico, el usuario se registra como perteneciente a la empresa.Este vínculo debe llevar a un formulario de registro donde el usuario llenará sus datos básicos.
+
+- El usuario administrador de la organización puede asignar a un usuario empleado de su
+empresa a un punto de acceso (sede ) y debe poder especificar varias franjas horarias
+dentro de la cual dicho empleado podrá acceder a la sede.
+
+-  El administrador debe poder activar o desactivar accesos a cada sede.
+
 ## Base de Datos
 
 La app usa base de datos postgres proporcionada por heroku para tener los datos en la web.
