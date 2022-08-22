@@ -371,23 +371,31 @@ class DetalleEmpleado(views.APIView):
                 serializer = EmpleadoSerializer(Empleado,many=False)
                 return Response(serializer.data,status=status.HTTP_200_OK)
             else:
-                return Response({"res": f"Usuario invalido"},status=status.HTTP_400_BAD_REQUEST)
+                return Response({"res": f"Empleado no disponible"},status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
             
         
-    
     def put(self, request, id):
         if request.user.is_staff:
+            admin = request.user.id
             try:
-                Emp = Empresa.objects.get(id=id)
+                empresa = Empresa.objects.get(admin_user=admin)
             except Empresa.DoesNotExist:
-                Emp = None
+                empresa = None
             
-            if not Emp:
-                return Response({"res": f"El objeto con el id: {id} no existe"},status=status.HTTP_400_BAD_REQUEST)
+            if empresa:
+                try:
+                    Empleado = Usuario.objects.get(id=id,empresa=empresa)
+                except Usuario.DoesNotExist:
+                    Empleado = None
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+            if not Empleado:
+                return Response({"res": f"Empleado no disponible"},status=status.HTTP_400_BAD_REQUEST)
 
-            serializer = EmpleadoSerializer(instance = Emp, data=request.data, partial = True)
+            serializer = EmpleadoSerializer(instance = Empleado, data=request.data, partial = True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -397,15 +405,155 @@ class DetalleEmpleado(views.APIView):
     
     def delete(self, request, id):
         if request.user.is_staff:
+            admin = request.user.id
             try:
-                Emp = Empresa.objects.get(id=id)
+                empresa = Empresa.objects.get(admin_user=admin)
             except Empresa.DoesNotExist:
-                Emp = None
+                empresa = None
+            
+            if empresa:
+                try:
+                    Empleado = Usuario.objects.get(id=id,empresa=empresa)
+                except Usuario.DoesNotExist:
+                    Empleado = None
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
 
-            if not Emp:
-                return Response({"res": f"La Empresa con el id: {id} no existe"},status=status.HTTP_400_BAD_REQUEST)
+            if not Empleado:
+                return Response({"res": f"Empleado no disponible"},status=status.HTTP_400_BAD_REQUEST)
 
-            Emp.delete()
-            return Response({"res": f"Empresa {Emp.nombre} ha sido eliminada!"}, status=status.HTTP_200_OK)
+            Empleado.delete()
+            return Response({"res": f"Empleado {Empleado.nombre} ha sido eliminado!"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+
+# Sedes
+class Sede(views.APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def get(self,request):
+        if request.user.is_superuser:
+            print(f"Soy superusuario {request.user}")
+            Sedes = Sucursal.objects.all()
+            serializer = SedeSerializer(Sedes, many=True)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        elif request.user.is_staff:
+            admin = request.user.id
+            print(f"Soy Administrador {request.user}")
+            print(request.user.has_perm("ControlAcceso.add_usuario"))
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                Sedes = Sucursal.objects.filter(empresa=empresa)
+                
+                if Sedes:  
+                    serializer = SedeSerializer(Sedes, many=True)  
+                    return Response(serializer.data,status=status.HTTP_200_OK)
+                
+                return Response({"res": f"No tienes sedes en tu empresa ({empresa.nombre})"},status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"res": "No estas asignado una empresa"},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+    
+    def post(self, request):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                request.data["empresa"] = empresa.id
+                serializer = SedeSerializer(data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+
+class DetalleSede(views.APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def get(self,request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Sede = Sucursal.objects.get(id=id,empresa=empresa)
+                except Sucursal.DoesNotExist:
+                    Sede = None
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+            if Sede:
+                serializer = SedeSerializer(Sede,many=False)
+                return Response(serializer.data,status=status.HTTP_200_OK)
+            else:
+                return Response({"res": f"Sede no disponible"},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+            
+        
+    def put(self, request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Sede = Sucursal.objects.get(id=id,empresa=empresa)
+                except Sucursal.DoesNotExist:
+                    Sede = None
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+            if not Sede:
+                return Response({"res": f"Sede no disponible"},status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = SedeSerializer(instance = Sede, data=request.data, partial = True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+    
+    def delete(self, request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Sede = Sucursal.objects.get(id=id,empresa=empresa)
+                except Sucursal.DoesNotExist:
+                    Sede = None
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+
+            if not Sede:
+                return Response({"res": f"Sede no disponible"},status=status.HTTP_400_BAD_REQUEST)
+
+            Sede.delete()
+            return Response({"res": f"Sede {Sede.nombre} ha sido eliminado!"}, status=status.HTTP_200_OK)
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)

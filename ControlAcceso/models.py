@@ -51,13 +51,13 @@ class Sucursal(models.Model):
         ('inactivo', 'inactivo')
     ]
 
-    nombre = models.CharField(max_length=50, verbose_name="Nit")
+    nombre = models.CharField(max_length=100, verbose_name="Nombre", unique=True)
     direccion = models.CharField(max_length=200, verbose_name="Dirección")
     email = models.EmailField(max_length=200, verbose_name="Correo electrónico")
     empresa = models.ForeignKey(Empresa,on_delete=models.CASCADE, verbose_name="Empresa")
     telefono = PhoneNumberField(verbose_name="Numero de celular")
     geolocalizacion = models.CharField(max_length=350, verbose_name="Geolocalización")
-    estado = models.CharField(max_length=8, choices=Estados, verbose_name="Estado del punto")
+    estado = models.CharField(max_length=8, choices=Estados, default='activo',verbose_name="Estado del punto")
 
     class Meta:
         db_table = "sucursales"

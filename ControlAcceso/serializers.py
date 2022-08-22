@@ -76,4 +76,24 @@ class EmpleadoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('No encontré esa ubicación')
         
         return value
+
+class SedeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sucursal
+        fields = '__all__'
+    
+    #Se valida la geolocalizacion con GeoPy
+    def validate_geolocalizacion(self,value):
+        geolocator = Nominatim(user_agent="useit")
+        location = ""
+
+        try:
+            location = geolocator.geocode(value)
+        except:
+            location = None
+
+        if not location:
+            raise serializers.ValidationError('No encontré esa ubicación')
+        
+        return location
     
