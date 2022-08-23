@@ -2,7 +2,7 @@ Versión Python: `3.6`
 
 Versión Django: `3.2.14`
 
-## Funcion de la Aplicación
+## Función de la Aplicación
 
 -  El usuario administrador(superusuario) de la aplicación puede crear empresas.
 
