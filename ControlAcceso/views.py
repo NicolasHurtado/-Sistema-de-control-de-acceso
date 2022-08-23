@@ -66,7 +66,6 @@ class ConfirmarEmail(GenericAPIView):
         if not data_token:
             return Response({'res': 'Token invalido'},status=status.HTTP_400_BAD_REQUEST)
         
-        print(data_token)
         user= User.objects.get(username=data_token["username"])
         user.estado = True
         user.save()
@@ -248,12 +247,10 @@ class CorreoRegistro(views.APIView):
     def post(self,request):
         if request.user.is_staff:
             admin = request.user.id
-            print(admin)
             try:
                 emp = Empresa.objects.get(admin_user=admin)
             except Empresa.DoesNotExist:
                 emp = None
-            print(emp)
 
             if emp:
                 token = create_token({'email': request.data["correo_destinatario"],'id_empresa': emp.id, 'nombre_empresa': emp.nombre })
@@ -279,7 +276,6 @@ class CorreoRegistro(views.APIView):
 @renderer_classes([JSONRenderer,TemplateHTMLRenderer])
 def Registro(request):
     token = request.query_params.get("token")
-    print(token)
     if not token:
         return JsonResponse({'res': 'No ha enviado token'},status=status.HTTP_400_BAD_REQUEST)
     
@@ -287,13 +283,11 @@ def Registro(request):
     if not data_token:
         return JsonResponse({'res': 'Token invalido'},status=status.HTTP_400_BAD_REQUEST)
     
-    print(data_token)
+    
     nombre_empresa = data_token["nombre_empresa"]
     id_empresa = data_token["id_empresa"]
     email = data_token["email"]
-    print(nombre_empresa)
-    print(id_empresa)
-    print(email)
+    
     context = {
         'nombre_empresa': nombre_empresa,
         'id_empresa': id_empresa,
@@ -306,15 +300,11 @@ class Empleado(views.APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def get(self,request):
         if request.user.is_superuser:
-            print(f"Soy superusuario {request.user}")
-            print(request.user.has_perm("ControlAcceso.add_usuario"))
             Empleados = Usuario.objects.all()
             serializer = EmpleadoSerializer(Empleados, many=True)
             return Response(serializer.data,status=status.HTTP_200_OK)
         elif request.user.is_staff:
             admin = request.user.id
-            print(f"Soy Administrador {request.user}")
-            print(request.user.has_perm("ControlAcceso.add_usuario"))
             try:
                 Emp = Empresa.objects.get(admin_user=admin)
             except Empresa.DoesNotExist:
@@ -335,7 +325,6 @@ class Empleado(views.APIView):
     
     def post(self, request):
         token = request.META.get('CSRF_COOKIE', None)
-        print(token)
         if not token:
             return Response({'res': 'No ha enviado token'},status=status.HTTP_400_BAD_REQUEST)
         
@@ -429,14 +418,11 @@ class Sede(views.APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def get(self,request):
         if request.user.is_superuser:
-            print(f"Soy superusuario {request.user}")
             Sedes = Sucursal.objects.all()
             serializer = SedeSerializer(Sedes, many=True)
             return Response(serializer.data,status=status.HTTP_200_OK)
         elif request.user.is_staff:
             admin = request.user.id
-            print(f"Soy Administrador {request.user}")
-            print(request.user.has_perm("ControlAcceso.add_usuario"))
             try:
                 empresa = Empresa.objects.get(admin_user=admin)
             except Empresa.DoesNotExist:
@@ -578,7 +564,6 @@ class HorarioEmpleado(views.APIView):
                 
                 if Usuarios:
                     nueva_lista = [usuario.id for usuario in Usuarios]
-                    print(nueva_lista)
                     try:
                         hor = Horario.objects.filter(usuario__in=nueva_lista) 
                     except Horario.DoesNotExist:
@@ -643,15 +628,12 @@ class DetalleHorarioEmpleado(views.APIView):
                     Ho = None
                 
                 if Ho:
-                    print("usuario",Ho.usuario_id)
                     try:
                         emp = Usuario.objects.get(id=Ho.usuario_id, empresa=empresa)
-                        print(emp)
                     except Usuario.DoesNotExist:
                         emp = None
                     
                     if emp:
-                        print("hola entre a serializar")
                         serializer = HorarioSerializer(Ho,many=False)
                         return Response(serializer.data,status=status.HTTP_200_OK)
                     return Response({"res": "El empleado no es de tu empresa"},status=status.HTTP_403_FORBIDDEN)
@@ -680,12 +662,10 @@ class DetalleHorarioEmpleado(views.APIView):
                 if Ho:
                     try:
                         emp = Usuario.objects.get(id=request.data["usuario"], empresa=empresa)
-                        print(emp)
                     except Usuario.DoesNotExist:
                         emp = None
                     
                     if emp:
-                        print("hola entre a serializar")
                         serializer = HorarioSerializer(instance = Ho, data=request.data, partial = True)
                         if serializer.is_valid():
                             serializer.save()
@@ -716,7 +696,6 @@ class DetalleHorarioEmpleado(views.APIView):
                 if Ho:
                     try:
                         emp = Usuario.objects.get(id=Ho.usuario_id, empresa=empresa)
-                        print(emp)
                     except Usuario.DoesNotExist:
                         emp = None
                     if emp:
@@ -754,7 +733,6 @@ class AsignacionEmpleado(views.APIView):
                 
                 if Sucursales:
                     nueva_lista = [sucur.id for sucur in Sucursales]
-                    print(nueva_lista)
                     try:
                         Asig = Asignacion.objects.filter(sucursal__in=nueva_lista) 
                     except Asignacion.DoesNotExist:
@@ -791,13 +769,11 @@ class AsignacionEmpleado(views.APIView):
                     Sede = Sucursal.objects.get(id=id_sucursal)
                 except Sucursal.DoesNotExist:
                     Sede = None
-                print(Sede)
                 if Ho:
                     try:
                         Empleado = Usuario.objects.get(id=Ho.usuario_id)
                     except Usuario.DoesNotExist:
                         Empleado = None
-                print(Empleado)
                 if Ho and Sede:
                     if Sede.empresa_id==empresa.id and Empleado.empresa_id==empresa.id:
                         serializer = AsignacionSerializer(data=request.data)
@@ -834,7 +810,6 @@ class DetalleAsignacionEmpleado(views.APIView):
                 
                 if Sucursales:
                     nueva_lista = [sucur.id for sucur in Sucursales]
-                    print(nueva_lista)
                     try:
                         Asig = Asignacion.objects.get(id=id,sucursal__in=nueva_lista) 
                     except Asignacion.DoesNotExist:
@@ -944,16 +919,11 @@ class IngresoEmpleado(views.APIView):
 
         if Emp:
             Hor = Horario.objects.get(usuario=Emp)
-            print(Hor)
             Asig = Asignacion.objects.get(horario=Hor)
-            print(Asig)
             if Asig:
                 hora_inicial = Hor.hora_inicial
                 hora_finalizacion = Hor.hora_finalizacion
                 hora_act = datetime.now().time()
-                print(hora_inicial)
-                print(hora_finalizacion)
-                print(hora_act>hora_finalizacion)
 
                 Sede = Sucursal.objects.get(id=Asig.sucursal_id) 
 
