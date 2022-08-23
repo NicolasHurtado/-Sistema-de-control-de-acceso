@@ -74,7 +74,7 @@ class Horario(models.Model):
         db_table = "horarios"
     
     def __str__(self):
-        return str(self.usuario.id)
+        return str(self.usuario)
 
 class Asignacion(models.Model):
     horario = models.ForeignKey(Horario,on_delete=models.CASCADE, verbose_name="Horario de Usuario")

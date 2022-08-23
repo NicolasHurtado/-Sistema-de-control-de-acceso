@@ -14,5 +14,5 @@ urlpatterns = [
     path("horario/",  HorarioEmpleado.as_view(), name="HorarioEmpleado"),
     path("horario/<int:id>/",  DetalleHorarioEmpleado.as_view(), name="DetalleHorarioEmpleado"),
     path("asignacion/",  AsignacionEmpleado.as_view(), name="AsignacionEmpleado"),
-    #path("asignacion/<int:id>/",  DetalleAsignacionEmpleado.as_view(), name="DetalleAsignacionEmpleado"),
+    path("asignacion/<int:id>/",  DetalleAsignacionEmpleado.as_view(), name="DetalleAsignacionEmpleado"),
 ]

@@ -75,11 +75,6 @@ class Administrator(views.APIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def get(self,request):
         if request.user.is_superuser:
-            print(request.user.is_staff)
-            print(request.user.username)
-            print(request.user.email)
-            print(request.user.user_permissions.all())
-            #print(request.user.has_perm("ControlAcceso.delete_user"))
             Admin = User.objects.all()
             serializer = AdministratorSerializer(Admin, many=True)
                 
@@ -586,9 +581,9 @@ class HorarioEmpleado(views.APIView):
                         hor = Horario.objects.filter(usuario__in=nueva_lista) 
                     except Horario.DoesNotExist:
                         hor = None
-
+                    
                     if not hor:
-                        Response({"res": f"No tienes horarios establecidos a tus empleados"},status=status.HTTP_400_BAD_REQUEST)
+                        return Response({"res": f"No tienes horarios establecidos a tus empleados"},status=status.HTTP_400_BAD_REQUEST)
                     
                     serializer = HorarioSerializer(hor, many=True)  
                     return Response(serializer.data,status=status.HTTP_200_OK)
@@ -751,25 +746,25 @@ class AsignacionEmpleado(views.APIView):
             
             if empresa:
                 try:
-                    Usuarios = Usuario.objects.filter(empresa=empresa)
-                except Usuario.DoesNotExist:
-                    Usuarios = None
+                    Sucursales = Sucursal.objects.filter(empresa=empresa)
+                except Sucursal.DoesNotExist:
+                    Sucursales = None
                 
-                if Usuarios:
-                    nueva_lista = [usuario.id for usuario in Usuarios]
+                if Sucursales:
+                    nueva_lista = [sucur.id for sucur in Sucursales]
                     print(nueva_lista)
                     try:
-                        Asig = Asignacion.objects.filter(usuario__in=nueva_lista) 
-                    except Horario.DoesNotExist:
-                        hor = None
-
-                    if not hor:
-                        Response({"res": f"No tienes horarios establecidos a tus empleados"},status=status.HTTP_400_BAD_REQUEST)
+                        Asig = Asignacion.objects.filter(sucursal__in=nueva_lista) 
+                    except Asignacion.DoesNotExist:
+                        Asig = None
                     
-                    serializer = HorarioSerializer(hor, many=True)  
+                    if not Asig:
+                        return Response({"res": f"No tienes Asignaciones establecidos a tus empleados"},status=status.HTTP_400_BAD_REQUEST)
+                    
+                    serializer = AsignacionSerializer(Asig, many=True)  
                     return Response(serializer.data,status=status.HTTP_200_OK)
                 
-                return Response({"res": f"No tienes empleados en tu empresa ({empresa.nombre})"},status=status.HTTP_400_BAD_REQUEST)
+                return Response({"res": f"No tienes Sucursales en tu empresa ({empresa.nombre})"},status=status.HTTP_400_BAD_REQUEST)
 
             return Response({"res": "No estas asignado una empresa"},status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -784,23 +779,153 @@ class AsignacionEmpleado(views.APIView):
                 empresa = None
             
             if empresa:
-                id_empleado = request.data["usuario"]
+                id_horario = request.data["horario"]
+                id_sucursal = request.data["sucursal"]
                 try:
-                    Emp = Usuario.objects.get(id=id_empleado,empresa=empresa)
-                except:
-                    Emp = None
-                
-                if Emp:
-                    serializer = HorarioSerializer(data=request.data)
-                    if serializer.is_valid():
-                        serializer.save()
-                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    Ho = Horario.objects.get(id=id_horario)
+                except Horario.DoesNotExist:
+                    Ho = None
+                try:
+                    Sede = Sucursal.objects.get(id=id_sucursal)
+                except Sucursal.DoesNotExist:
+                    Sede = None
+                print(Sede)
+                if Ho:
+                    try:
+                        Empleado = Usuario.objects.get(id=Ho.usuario_id)
+                    except Usuario.DoesNotExist:
+                        Empleado = None
+                print(Empleado)
+                if Ho and Sede:
+                    if Sede.empresa_id==empresa.id and Empleado.empresa_id==empresa.id:
+                        serializer = AsignacionSerializer(data=request.data)
+                        if serializer.is_valid():
+                            serializer.save()
+                            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"res": f"La sede y/o horario no son de tu empresa ({empresa.nombre})"},status=status.HTTP_403_FORBIDDEN)
 
-                return Response({"res": "Empleado no disponible"},status=status.HTTP_403_FORBIDDEN)
+                return Response({"res": f"La sede y/o horario no validos"},status=status.HTTP_403_FORBIDDEN)
             else:
                 return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
             
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+
+
+class DetalleAsignacionEmpleado(views.APIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def get(self,request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Sucursales = Sucursal.objects.filter(empresa=empresa)
+                except Sucursal.DoesNotExist:
+                    Sucursales = None
+                
+                if Sucursales:
+                    nueva_lista = [sucur.id for sucur in Sucursales]
+                    print(nueva_lista)
+                    try:
+                        Asig = Asignacion.objects.get(id=id,sucursal__in=nueva_lista) 
+                    except Asignacion.DoesNotExist:
+                        Asig = None
+                    
+                    if not Asig:
+                        return Response({"res": f"Asignación no valida, intenta de nuevo"},status=status.HTTP_400_BAD_REQUEST)
+                    
+                    serializer = AsignacionSerializer(Asig, many=False)  
+                    return Response(serializer.data,status=status.HTTP_200_OK)
+                
+                return Response({"res": f"No tienes Sucursales en tu empresa ({empresa.nombre})"},status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"res": "No estas asignado una empresa"},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+            
+        
+    def put(self, request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            if empresa:
+                try:
+                    Asig = Asignacion.objects.get(id=id)
+                except Asignacion.DoesNotExist:
+                    Asig = None
+                
+                if Asig:
+                    id_horario = request.data["horario"]
+                    id_sucursal = request.data["sucursal"]
+                    try:
+                        Ho = Horario.objects.get(id=id_horario)
+                    except Horario.DoesNotExist:
+                        Ho = None
+                    try:
+                        Sede = Sucursal.objects.get(id=id_sucursal)
+                    except Sucursal.DoesNotExist:
+                        Sede = None
+                    if Ho:
+                        try:
+                            Empleado = Usuario.objects.get(id=Ho.usuario_id)
+                        except Usuario.DoesNotExist:
+                            Empleado = None
+
+                    if Ho and Sede:
+                        if Sede.empresa_id==empresa.id and Empleado.empresa_id==empresa.id:
+                            serializer = AsignacionSerializer(instance = Asig, data=request.data, partial = True)
+                            if serializer.is_valid():
+                                serializer.save()
+                                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+                            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        return Response({"res": f"La sede y/o horario no son de tu empresa ({empresa.nombre})"},status=status.HTTP_403_FORBIDDEN)
+
+                    return Response({"res": f"La sede y/o horario no validos"},status=status.HTTP_403_FORBIDDEN)
+                return Response({"res": f"Asignación no valida, intenta de nuevo"},status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+            
+        else:
+            return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+    
+    def delete(self, request, id):
+        if request.user.is_staff:
+            admin = request.user.id
+            try:
+                empresa = Empresa.objects.get(admin_user=admin)
+            except Empresa.DoesNotExist:
+                empresa = None
+            
+            if empresa:
+                try:
+                    Asig = Asignacion.objects.get(id=id)
+                except Asignacion.DoesNotExist:
+                    Asig = None
+                if Asig:
+                    try:
+                        Sede = Sucursal.objects.get(id=Asig.sucursal_id)
+                    except Sucursal.DoesNotExist:
+                        Sede = None
+                    
+                    if Sede.empresa==empresa:
+                        Asig.delete()
+                        return Response({"res": f"La Asignación de horario de {empresa.nombre} ha sido eliminada!"}, status=status.HTTP_200_OK)
+                    return Response({"res": "La Asignación no es de tu empresa"},status=status.HTTP_403_FORBIDDEN)
+                else:
+                    return Response({"res": "Asignación no disponible"},status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"res": "No estas asignado una empresa"},status=status.HTTP_403_FORBIDDEN)
+
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
