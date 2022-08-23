@@ -1,6 +1,8 @@
+from datetime import datetime
+from django.core import serializers
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from django.shortcuts import render
-from django.http.response import JsonResponse
+from django.http import JsonResponse
 from rest_framework.decorators import api_view, renderer_classes
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication 
@@ -929,3 +931,61 @@ class DetalleAsignacionEmpleado(views.APIView):
 
         else:
             return Response({"res": "No tienes permiso para esta accion"},status=status.HTTP_403_FORBIDDEN)
+    
+#Con el numero de identificacion valida el acceso al empleado
+class IngresoEmpleado(views.APIView):
+    def post(self, request):
+        identificacion = request.data["identificacion"]
+        
+        try:
+            Emp = Usuario.objects.get(identificacion=identificacion)
+        except Usuario.DoesNotExist:
+            Emp = None
+
+        if Emp:
+            Hor = Horario.objects.get(usuario=Emp)
+            print(Hor)
+            Asig = Asignacion.objects.get(horario=Hor)
+            print(Asig)
+            if Asig:
+                hora_inicial = Hor.hora_inicial
+                hora_finalizacion = Hor.hora_finalizacion
+                hora_act = datetime.now().time()
+                print(hora_inicial)
+                print(hora_finalizacion)
+                print(hora_act>hora_finalizacion)
+
+                Sede = Sucursal.objects.get(id=Asig.sucursal_id) 
+
+                if Sede.estado=='activo':
+                    punto = SedeSerializer(Sede,many=False)
+                    if hora_act > hora_inicial and hora_act < hora_finalizacion:
+                        data={
+                            "ingreso_usuario" : True,
+                            "sede" : punto.data
+                        }
+                        return Response(data, status=status.HTTP_200_OK)
+                    else:
+                        empre = Empresa.objects.get(id=Emp.empresa_id)
+                        admin = User.objects.get(id=empre.admin_user_id)
+                        data={
+                            "ingreso_usuario" : False,
+                            "sede" : punto.data
+                        }
+                        #Se envia el correo al administrador del intento fallido
+                        msj = f"""Se detecta un ingreso rechazado con la siguiente identificación: {Emp.nombre} {Emp.apellido} - {request.data["identificacion"]}  """
+                        sbj = f""" DETECCIÓN DE INGRESO FALLIDO """
+                        send_mail(
+                                subject=sbj,
+                                message=msj,
+                                from_email=settings.EMAIL_HOST_USER,
+                                recipient_list=[admin.email],
+                            )
+                        return Response(data,status=status.HTTP_403_FORBIDDEN)
+                else:        
+                    return Response({"res": f"{Sede.nombre} se encuentra actualmente Inactiva"}, status=status.HTTP_400_BAD_REQUEST)     
+
+            return Response({"res": f"El usuario no tiene un horario asignado"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"res": f"Usuario no registrado"}, status=status.HTTP_401_UNAUTHORIZED)
+

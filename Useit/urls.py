@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-from ControlAcceso.views import  LoginView, LogoutView, ConfirmarEmail, Registro, CorreoRegistro
+from ControlAcceso.views import  LoginView, LogoutView, ConfirmarEmail, Registro, CorreoRegistro, IngresoEmpleado
 
 
 urlpatterns = [
@@ -26,6 +26,7 @@ urlpatterns = [
     path('confirmar/',ConfirmarEmail.as_view(), name='ConfirmarEmail'),
     path('registro/', Registro, name='Registro'),
     path('correo_registro/', CorreoRegistro.as_view(), name='CorreoRegistro'),
+    path('ingreso_empleado/', IngresoEmpleado.as_view(), name='IngresoEmpleado'),
     path('control/', include('ControlAcceso.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

@@ -84,4 +84,4 @@ class Asignacion(models.Model):
         db_table = "asignaciones"
     
     def __str__(self):
-        return self.pk
+        return str(self.sucursal)
